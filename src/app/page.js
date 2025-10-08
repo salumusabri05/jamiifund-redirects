@@ -24,6 +24,13 @@ export default function Home() {
       href: "/payment-success?amount=500&campaign=Medical%20Fund&transaction_id=TXN123456789",
       icon: "✅",
       color: "from-green-500 to-blue-500"
+    },
+    {
+      title: "ClickPesa Tester",
+      description: "Test real ClickPesa USSD Push integration with Supabase",
+      href: "/test-clickpesa",
+      icon: "🧪",
+      color: "from-orange-500 to-pink-500"
     }
   ];
 
