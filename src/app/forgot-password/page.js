@@ -1,16 +1,15 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
 export default function ResetPassword() {
-  const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [status, setStatus] = useState("idle"); // idle, loading, success, error
+  const [showPassword, setShowPassword] = useState(false);
+  const [status, setStatus] = useState("idle"); // idle, loading, success
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -28,11 +27,9 @@ export default function ResetPassword() {
 
     setStatus("loading");
 
-    // Simulate API call
     setTimeout(() => {
       setStatus("success");
 
-      // Redirect back to app after 2 seconds
       setTimeout(() => {
         window.location.href = `jamiifund://login`;
       }, 2000);
@@ -43,7 +40,6 @@ export default function ResetPassword() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-purple-700 to-blue-600 flex items-center justify-center p-4 overflow-hidden">
-      {/* Animated background particles */}
       <div className="absolute inset-0 overflow-hidden">
         {[...Array(20)].map((_, i) => (
           <div
@@ -82,45 +78,53 @@ export default function ResetPassword() {
           Reset Password
         </h1>
         <p className="text-gray-600 text-center mb-8">
-          Enter your new password twice to reset
+          Enter your new password twice
         </p>
 
         {status === "success" ? (
           <div className="text-center animate-slide-up">
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-            </div>
-            <h2 className="text-xl font-semibold mb-2">Password Reset Successful!</h2>
-            <p className="text-gray-600">Redirecting you back to the app to login...</p>
+            <h2 className="text-xl font-semibold mb-2">Password reset successful!</h2>
+            <p className="text-gray-600">Please go back to login in the application.</p>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">New Password</label>
-              <input
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-purple-600 focus:outline-none transition-colors"
-                placeholder="••••••••"
-                disabled={status === "loading"}
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-purple-600 focus:outline-none transition-colors"
+                  placeholder="••••••••"
+                  disabled={status === "loading"}
+                  style={{ backgroundColor: "white", color: "black" }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 font-semibold"
+                >
+                  {showPassword ? "Hide" : "Show"}
+                </button>
+              </div>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Confirm Password</label>
-              <input
-                type="password"
-                required
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-purple-600 focus:outline-none transition-colors"
-                placeholder="••••••••"
-                disabled={status === "loading"}
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  required
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-purple-600 focus:outline-none transition-colors"
+                  placeholder="••••••••"
+                  disabled={status === "loading"}
+                  style={{ backgroundColor: "white", color: "black" }}
+                />
+              </div>
             </div>
 
             {error && <p className="text-red-500 text-sm">{error}</p>}
