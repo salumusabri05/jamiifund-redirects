@@ -31,6 +31,13 @@ export default function Home() {
       href: "/test-clickpesa",
       icon: "🧪",
       color: "from-orange-500 to-pink-500"
+    },
+    {
+      title: "Webhook Tester",
+      description: "Simulate ClickPesa webhook events and test integration",
+      href: "/test-webhook",
+      icon: "🔔",
+      color: "from-blue-500 to-indigo-500"
     }
   ];
 

@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import axios from 'axios';
 
 let bearerToken = '';
 let tokenExpiresAt = 0;
@@ -28,35 +27,35 @@ export async function POST() {
 
     console.log('Generating new ClickPesa token...');
     
-    // Generate new token
-    const response = await axios.post(
-      'https://api.clickpesa.com/third-parties/generate-token',
-      {},
-      {
-        headers: {
-          'client-id': process.env.CLICKPESA_CLIENT_ID,
-          'api-key': process.env.CLICKPESA_API_KEY
-        }
+    // Generate new token using fetch
+    const url = 'https://api.clickpesa.com/third-parties/generate-token';
+    const options = {
+      method: 'POST',
+      headers: {
+        'client-id': process.env.CLICKPESA_CLIENT_ID,
+        'api-key': process.env.CLICKPESA_API_KEY
       }
-    );
+    };
 
-    bearerToken = response.data.token;
+    const response = await fetch(url, options);
+    const data = await response.json();
+
+    if (!response.ok) {
+      console.error('ClickPesa token generation failed:', data);
+      throw new Error(data.message || 'Token generation failed');
+    }
+
+    bearerToken = data.token;
     tokenExpiresAt = now + 90 * 60 * 1000; // 1.5 hours
 
     console.log('Token generated successfully');
     return NextResponse.json({ token: bearerToken });
   } catch (error) {
-    console.error('Token generation error:', error.response?.data || error.message);
-    console.error('Error details:', {
-      status: error.response?.status,
-      statusText: error.response?.statusText,
-      data: error.response?.data
-    });
+    console.error('Token generation error:', error.message);
     return NextResponse.json(
       { 
         error: 'Failed to generate token', 
-        details: error.response?.data?.message || error.response?.data || error.message,
-        status: error.response?.status
+        details: error.message
       },
       { status: error.response?.status || 500 }
     );
