@@ -1,8 +1,8 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-export default function PaymentProcessing() {
+function PaymentProcessingContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -175,5 +175,17 @@ export default function PaymentProcessing() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function PaymentProcessing() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-purple-700 to-blue-600 flex items-center justify-center">
+        <div className="text-white text-xl">Loading...</div>
+      </div>
+    }>
+      <PaymentProcessingContent />
+    </Suspense>
   );
 }
