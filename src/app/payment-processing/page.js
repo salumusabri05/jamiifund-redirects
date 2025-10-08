@@ -1,146 +1,147 @@
 "use client";
 
-// Tell Next.js not to prerender this page
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+
 export const dynamic = "force-dynamic";
 
-import { useState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-
-export default function PaymentSuccess() {
+export default function PaymentProcessing() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-
-  // Safely read query params
-  const amount = searchParams?.get("amount") || "0";
-  const campaign = searchParams?.get("campaign") || "Campaign";
-  const transaction_id = searchParams?.get("transaction_id") || `TXN${Date.now()}`;
 
   const [mounted, setMounted] = useState(false);
-  const [countdown, setCountdown] = useState(5);
+  const [amount, setAmount] = useState("0");
+  const [phone, setPhone] = useState("");
+  const [campaign, setCampaign] = useState("Campaign");
+  const [status, setStatus] = useState("initiating");
+  const [dots, setDots] = useState("");
 
-  // Mark component as mounted
   useEffect(() => {
     setMounted(true);
+
+    // safely get query params
+    const searchParams = new URLSearchParams(window.location.search);
+    setAmount(searchParams.get("amount") || "0");
+    setPhone(searchParams.get("phone") || "");
+    setCampaign(searchParams.get("campaign") || "Campaign");
   }, []);
 
-  // Countdown and redirect back to app
+  // Animate dots for loading
   useEffect(() => {
-    if (countdown <= 0) {
-      window.location.href = `jamiifund://payment-success?transaction=${transaction_id}`;
-      return;
-    }
+    const interval = setInterval(() => {
+      setDots((prev) => (prev.length >= 3 ? "" : prev + "."));
+    }, 500);
+    return () => clearInterval(interval);
+  }, []);
 
-    const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
-    return () => clearTimeout(timer);
-  }, [countdown, transaction_id]);
+  useEffect(() => {
+    if (!mounted) return;
+
+    const flow = async () => {
+      await new Promise((r) => setTimeout(r, 1500));
+      setStatus("sent");
+      await new Promise((r) => setTimeout(r, 2000));
+      setStatus("waiting");
+      await new Promise((r) => setTimeout(r, 8000));
+      setStatus("checking");
+      await new Promise((r) => setTimeout(r, 2000));
+
+      const success = Math.random() > 0.2;
+      if (success) {
+        setStatus("success");
+        setTimeout(() => {
+          router.push(
+            `/payment-success?amount=${amount}&campaign=${campaign}&transaction_id=TXN${Date.now()}`
+          );
+        }, 2500);
+      } else {
+        setStatus("failed");
+      }
+    };
+
+    flow();
+  }, [mounted, router, amount, campaign]);
+
+  const handleRetry = () => window.location.reload();
+  const handleCancel = () => (window.location.href = "jamiifund://payment-cancelled");
+
+  const getStatusInfo = () => {
+    switch (status) {
+      case "initiating":
+        return { icon: "🔄", title: "Initiating Payment", message: "Setting up your M-Pesa payment", color: "#8A2BE2" };
+      case "sent":
+        return { icon: "📱", title: "STK Push Sent", message: "Check your phone for the M-Pesa prompt", color: "#3B82F6" };
+      case "waiting":
+        return { icon: "⏳", title: "Waiting for Confirmation", message: "Please enter your M-Pesa PIN on your phone", color: "#F59E0B" };
+      case "checking":
+        return { icon: "🔍", title: "Verifying Payment", message: "Checking transaction status", color: "#8A2BE2" };
+      case "success":
+        return { icon: "✅", title: "Payment Successful!", message: "Your contribution has been received", color: "#10B981" };
+      case "failed":
+        return { icon: "❌", title: "Payment Failed", message: "The transaction was not completed", color: "#EF4444" };
+      default:
+        return { icon: "🔄", title: "Processing", message: "Please wait", color: "#8A2BE2" };
+    }
+  };
+
+  const statusInfo = getStatusInfo();
+
+  if (!mounted) return null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-400 via-blue-500 to-purple-600 flex items-center justify-center p-4 overflow-hidden">
-      
-      {/* Confetti */}
+    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-purple-700 to-blue-600 flex items-center justify-center p-4 overflow-hidden">
       <div className="absolute inset-0 overflow-hidden">
-        {[...Array(50)].map((_, i) => (
+        {[...Array(15)].map((_, i) => (
           <div
             key={i}
-            className="absolute"
+            className="absolute rounded-full bg-white opacity-5"
             style={{
-              width: '10px',
-              height: '10px',
-              backgroundColor: ['#FFD700','#FF69B4','#00CED1','#FF6347','#32CD32'][i % 5],
-              left: `${Math.random() * 100}%`,
-              animationDelay: `${Math.random() * 3}s`,
-              animation: `fall ${Math.random() * 3 + 3}s linear infinite`,
-              opacity: 0.8,
+              width: Math.random() * 150 + 50 + "px",
+              height: Math.random() * 150 + 50 + "px",
+              left: Math.random() * 100 + "%",
+              top: Math.random() * 100 + "%",
+              animation: `float ${Math.random() * 15 + 10}s ease-in-out infinite`,
+              animationDelay: Math.random() * 5 + "s",
             }}
           />
         ))}
       </div>
 
       <style jsx>{`
-        @keyframes fall {
-          0% { transform: translateY(-100vh) rotate(0deg); }
-          100% { transform: translateY(100vh) rotate(360deg); }
+        @keyframes float {
+          0%, 100% { transform: translateY(0) translateX(0) rotate(0deg); }
+          33% { transform: translateY(-20px) translateX(20px) rotate(120deg); }
+          66% { transform: translateY(20px) translateX(-20px) rotate(240deg); }
         }
-        @keyframes scaleIn {
-          0% { transform: scale(0); opacity: 0; }
-          50% { transform: scale(1.1); }
-          100% { transform: scale(1); opacity: 1; }
-        }
-        @keyframes checkmark {
-          0% { stroke-dashoffset: 100; }
-          100% { stroke-dashoffset: 0; }
-        }
-        @keyframes slideUp {
-          from { opacity: 0; transform: translateY(30px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        .animate-scale-in { animation: scaleIn 0.5s cubic-bezier(0.68,-0.55,0.265,1.55) forwards; }
-        .animate-checkmark { stroke-dasharray: 100; stroke-dashoffset: 100; animation: checkmark 0.6s ease-in-out 0.3s forwards; }
-        .animate-slide-up { animation: slideUp 0.6s ease-out forwards; }
       `}</style>
 
-      <div className={`relative bg-white rounded-3xl shadow-2xl p-8 md:p-12 max-w-md w-full ${mounted ? "animate-scale-in" : "opacity-0"}`}>
-        {/* Success Icon */}
-        <div className="flex justify-center mb-6">
-          <div className="relative w-24 h-24">
-            <svg className="w-24 h-24" viewBox="0 0 100 100">
-              <circle cx="50" cy="50" r="45" fill="none" stroke="#10B981" strokeWidth="4" className="animate-scale-in" />
-              <path d="M25 50 L40 65 L75 30" fill="none" stroke="#10B981" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" className="animate-checkmark" />
-            </svg>
-          </div>
-        </div>
-
-        <h1 className="text-3xl font-bold text-center mb-2 text-gray-800 animate-slide-up">
-          Payment Successful! 🎉
-        </h1>
-        <p className="text-gray-600 text-center mb-8 animate-slide-up" style={{ animationDelay: '0.2s' }}>
-          Thank you for your generous contribution!
+      <div className="relative bg-white rounded-3xl shadow-2xl p-8 md:p-12 max-w-md w-full text-center">
+        <div className="text-6xl mb-6">{statusInfo.icon}</div>
+        <h1 className="text-3xl font-bold mb-3" style={{ color: statusInfo.color }}>{statusInfo.title}</h1>
+        <p className="text-gray-600 text-lg mb-6">
+          {statusInfo.message}
+          {(status === "initiating" || status === "checking") && <span className="ml-2">{dots}</span>}
         </p>
 
-        {/* Payment Details */}
-        <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-2xl p-6 mb-6 animate-slide-up" style={{ animationDelay: '0.3s' }}>
-          <div className="flex justify-between items-center mb-4">
-            <span className="text-gray-600 font-medium">Amount</span>
-            <span className="text-2xl font-bold" style={{ color: '#8A2BE2' }}>${amount}</span>
+        {status === "failed" && (
+          <div className="space-y-3">
+            <button
+              onClick={handleRetry}
+              className="w-full py-4 rounded-xl text-white font-semibold shadow-lg bg-gradient-to-r from-purple-600 to-blue-600"
+            >
+              Try Again
+            </button>
+            <button
+              onClick={handleCancel}
+              className="w-full py-4 rounded-xl border-2 border-gray-300 text-gray-700 font-semibold"
+            >
+              Cancel
+            </button>
           </div>
-          <div className="flex justify-between items-center mb-4">
-            <span className="text-gray-600 font-medium">Campaign</span>
-            <span className="text-gray-800 font-semibold">{campaign}</span>
-          </div>
-          <div className="border-t border-gray-200 pt-4">
-            <span className="text-xs text-gray-500">Transaction ID</span>
-            <p className="text-xs text-gray-700 font-mono mt-1 break-all">{transaction_id}</p>
-          </div>
-        </div>
+        )}
 
-        {/* Countdown */}
-        <div className="text-center mb-6 animate-slide-up" style={{ animationDelay: '0.4s' }}>
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-purple-600 to-blue-600 text-white text-2xl font-bold mb-3">
-            {countdown}
-          </div>
-          <p className="text-gray-600">Redirecting you back to JamiiFund...</p>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="space-y-3 animate-slide-up" style={{ animationDelay: '0.5s' }}>
-          <button
-            onClick={() => { window.location.href = `jamiifund://payment-success?transaction=${transaction_id}`; }}
-            className="w-full py-4 rounded-xl text-white font-semibold shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105"
-            style={{ background: 'linear-gradient(135deg, #8A2BE2 0%, #6B1CB0 100%)' }}
-          >
-            Return to App Now
-          </button>
-          <button
-            onClick={() => router.push('/')}
-            className="w-full py-4 rounded-xl border-2 border-purple-600 text-purple-600 font-semibold transition-all duration-300 hover:bg-purple-50"
-          >
-            View Receipt
-          </button>
-        </div>
-
-        <div className="mt-6 text-center text-sm text-gray-500 animate-slide-up" style={{ animationDelay: '0.6s' }}>
-          💜 Share your contribution and inspire others!
-        </div>
+        {status === "success" && (
+          <div className="mt-4 text-sm text-gray-500">Redirecting you back to JamiiFund...</div>
+        )}
       </div>
     </div>
   );
